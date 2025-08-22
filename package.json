@@ -1,0 +1,134 @@
+{
+  "name": "ai-commit-forge",
+  "displayName": "AI Commit Forge",
+  "description": "Generate individual commit messages per file using AI",
+  "version": "0.0.3",
+  "publisher": "abenkarroum",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abenkarroum/ai-commit-forge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abenkarroum/ai-commit-forge/issues"
+  },
+  "homepage": "https://github.com/abenkarroum/ai-commit-forge#readme",
+  "main": "out/extension.js",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "keywords": [
+    "ai",
+    "commit",
+    "git",
+    "openai",
+    "gemini",
+    "copilot",
+    "ollama",
+    "automation"
+  ],
+  "categories": [
+    "AI",
+    "SCM Providers",
+    "Other"
+  ],
+  "activationEvents": [
+    "onUri",
+    "onView:aiCommitForge.sidebar"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "aiCommitForge.generate",
+        "title": "AI Commit Forge: Generate per-file commit messages",
+        "icon": {
+          "light": "resources/light/notebook.svg",
+          "dark": "resources/dark/notebook.svg"
+        }
+      },
+      {
+        "command": "aiCommitForge.openConfig",
+        "title": "AI Commit Forge: Open Provider Config"
+      }
+    ],
+    "configuration": {
+      "title": "AI Commit Forge",
+      "properties": {
+        "aiCommitHelper.activeProvider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "gemini",
+            "vertex",
+            "github",
+            "ollama"
+          ],
+          "default": "gemini",
+          "description": "Which provider to use for generation."
+        },
+        "aiCommitHelper.vertex.clientId": {
+          "type": "string",
+          "default": "",
+          "description": "OAuth Client ID for Google (Vertex AI). Redirect URI must be vscode://abenkarroum.ai-commit-forge/callback"
+        },
+        "aiCommitHelper.github.clientId": {
+          "type": "string",
+          "default": "",
+          "description": "OAuth Client ID for GitHub. Redirect URI must be vscode://abenkarroum.ai-commit-forge/callback"
+        }
+      }
+    },
+    "menus": {
+      "scm/title": [
+        {
+          "command": "aiCommitForge.generate",
+          "group": "navigation",
+          "when": "scmProvider == git"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiCommitForge",
+          "title": "AI Commit Forge",
+          "icon": "resources/light/llm.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiCommitForge": [
+        {
+          "id": "aiCommitForge.sidebar",
+          "name": "LLM Providers",
+          "icon": "resources/light/llm.svg",
+          "when": "true",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "dev": "node --no-warnings ./out/extension.js",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "watch:tsc": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "build": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
+    "watch:esbuild": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
+    "install:extension": "code --install-extension ai-commit-forge-0.0.3.vsix"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@xenova/transformers": "^2.17.2",
+    "simple-git": "^3.24.0",
+    "undici": "^7.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.0.0",
+    "vscode": "^1.1.37"
+  }
+}
