@@ -6,12 +6,12 @@
   "publisher": "abenkarroum",
   "repository": {
     "type": "git",
-    "url": "https://github.com/abenkarroum/ai-commit-forge.git"
+    "url": "https://github.com/karroumBen/ai-commit-forge.git"
   },
   "bugs": {
-    "url": "https://github.com/abenkarroum/ai-commit-forge/issues"
+    "url": "https://github.com/karroumBen/ai-commit-forge/issues"
   },
-  "homepage": "https://github.com/abenkarroum/ai-commit-forge#readme",
+  "homepage": "https://github.com/karroumBen/ai-commit-forge#readme",
   "main": "out/extension.js",
   "engines": {
     "vscode": "^1.80.0"
