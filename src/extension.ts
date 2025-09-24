@@ -4,12 +4,17 @@ import { OAuthManager } from "./oauth";
 import { OAUTH_PROVIDERS } from "./providers";
 import { generateAIMessage } from "./aiUtils";
 import { getStagedFiles, getDiff } from "./gitUtils";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 // Constants
 const COMMANDS = {
   GENERATE: "aiCommitForge.generate",
   GENERATE_TEST: "aiCommitForge.generateTestMessage",
   OPEN_CONFIG: "aiCommitForge.openConfig",
+  GENERATE_FOR_FILE: "aiCommitForge.generateForFile",
 } as const;
 
 const MESSAGES = {
@@ -103,16 +108,24 @@ function registerCommands(
     [COMMANDS.GENERATE, () => handleGenerateCommit(context)],
     [COMMANDS.GENERATE_TEST, () => handleTestGeneration(context)],
     [COMMANDS.OPEN_CONFIG, handleOpenConfig],
+    [
+      COMMANDS.GENERATE_FOR_FILE,
+      (resource?: vscode.SourceControlResourceState) =>
+        handleGenerateForFile(context, resource),
+    ],
   ]);
 
-  commandHandlers.forEach((handler, commandId) => {
-    const disposable = vscode.commands.registerCommand(commandId, async () => {
-      try {
-        await handler();
-      } catch (error) {
-        await handleCommandError(commandId, error);
+  commandHandlers.forEach((handler: (args: any) => void, commandId) => {
+    const disposable = vscode.commands.registerCommand(
+      commandId,
+      async (args) => {
+        try {
+          await handler(args);
+        } catch (error) {
+          await handleCommandError(commandId, error);
+        }
       }
-    });
+    );
 
     context.subscriptions.push(disposable);
   });
@@ -268,4 +281,68 @@ async function handleCommandError(
   await vscode.window.showErrorMessage(`Command failed: ${errorMessage}`, {
     modal: false,
   });
+}
+
+export async function handleGenerateForFile(
+  context: vscode.ExtensionContext,
+  resource?: vscode.SourceControlResourceState
+): Promise<void> {
+  if (!resource?.resourceUri) {
+    vscode.window.showWarningMessage("No file resource provided.");
+    return;
+  }
+
+  const filePath = resource.resourceUri.fsPath;
+
+  const gitExtension = vscode.extensions.getExtension("vscode.git");
+  if (!gitExtension) {
+    vscode.window.showErrorMessage("Git extension not found.");
+    return;
+  }
+
+  const gitApi = gitExtension.exports?.getAPI(1);
+  if (!gitApi?.repositories?.length) {
+    vscode.window.showErrorMessage("No Git repositories found in workspace.");
+    return;
+  }
+
+  const repository = gitApi.repositories.find((r: any) =>
+    filePath.startsWith(r.rootUri.fsPath)
+  );
+  if (!repository) {
+    vscode.window.showErrorMessage(
+      "File is not inside a recognized Git repository."
+    );
+    return;
+  }
+
+  try {
+    await execAsync(`git add "${filePath}"`, {
+      cwd: repository.rootUri.fsPath,
+    });
+
+    const diff = await getDiff(filePath);
+    if (!diff?.trim()) {
+      vscode.window.showInformationMessage(
+        "No changes detected for this file."
+      );
+      return;
+    }
+
+    const commitMessage = await generateAIMessage({
+      context,
+      fileName: filePath,
+      diff,
+    });
+
+    repository.inputBox.value = commitMessage;
+
+    vscode.window.showInformationMessage(
+      `Commit message for ${filePath} inserted.`
+    );
+  } catch (error: any) {
+    vscode.window.showErrorMessage(
+      `Failed to generate commit for file: ${error?.message || error}`
+    );
+  }
 }
