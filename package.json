@@ -39,15 +39,24 @@
     "commands": [
       {
         "command": "aiCommitForge.generate",
-        "title": "AI Commit Forge: Generate per-file commit messages",
+        "title": "AI Commit",
         "icon": {
-          "light": "resources/light/llm4.svg",
-          "dark": "resources/dark/llm4.svg"
+          "light": "resources/light/notebook.svg",
+          "dark": "resources/dark/notebook.svg"
         }
       },
       {
         "command": "aiCommitForge.openConfig",
         "title": "AI Commit Forge: Open Provider Config"
+      },
+      {
+        "command": "aiCommitForge.generateForFile",
+        "title": "$(sparkle) AI Commit",
+        "category": "AI Commit Forge",
+        "icon": {
+          "light": "resources/light/notebook.svg",
+          "dark": "resources/dark/notebook.svg"
+        }
       }
     ],
     "configuration": {
@@ -84,6 +93,13 @@
           "group": "navigation",
           "when": "scmProvider == git"
         }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "aiCommitForge.generateForFile",
+          "group": "inline",
+          "when": "scmProvider == git"
+        }
       ]
     },
     "viewsContainers": {
@@ -112,7 +128,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "watch:tsc": "tsc -watch -p ./",
-    "package": "vsce package",
+    "package": "vsce package --no-yarn",
     "publish": "vsce publish",
     "build": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
     "watch:esbuild": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
