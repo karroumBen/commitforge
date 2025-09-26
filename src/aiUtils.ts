@@ -24,7 +24,7 @@ export async function generateAIMessage({
       if (!key) throw new Error("Gemini API key not set.");
       // Minimal HTTP call to Gemini REST (model name adjustable)
       const res = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
           encodeURIComponent(key),
         {
           method: "POST",
@@ -37,7 +37,7 @@ export async function generateAIMessage({
       const data: any = await res.json();
       text =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-        "update changes";
+        "gemini could not generate a commit message.";
     } else if (provider === "openai") {
       const key = await getApiKey(context, "openai");
       if (!key) throw new Error("OpenAI API key not set.");
@@ -54,7 +54,9 @@ export async function generateAIMessage({
         }),
       });
       const data: any = await res.json();
-      text = data?.choices?.[0]?.message?.content?.trim() || "update changes";
+      text =
+        data?.choices?.[0]?.message?.content?.trim() ||
+        "openai could not generate a commit message.";
     } else if (provider === "vertex") {
       // Example using OAuth access token (obtained via oauth.start)
       const oauth = new OAuthManager(context, {} as any); // reuse store methods
