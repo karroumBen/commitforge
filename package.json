@@ -2,7 +2,7 @@
   "name": "ai-commit-forge",
   "displayName": "AI Commit Forge",
   "description": "Generate individual commit messages per file using AI",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "abenkarroum",
   "repository": {
     "type": "git",
@@ -132,7 +132,7 @@
     "publish": "vsce publish",
     "build": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
     "watch:esbuild": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
-    "install:extension": "code --install-extension ai-commit-forge-0.0.3.vsix"
+    "install:extension": "code --install-extension ai-commit-forge-0.0.4.vsix"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
