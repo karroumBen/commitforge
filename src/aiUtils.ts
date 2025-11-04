@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { fetch } from "undici";
 import { getActiveProvider, getApiKey } from "./secrets";
-import { OAuthManager } from "./oauth";
 
 export async function generateAIMessage({
   context,
@@ -57,18 +56,6 @@ export async function generateAIMessage({
       text =
         data?.choices?.[0]?.message?.content?.trim() ||
         "openai could not generate a commit message.";
-    } else if (provider === "vertex") {
-      // Example using OAuth access token (obtained via oauth.start)
-      const oauth = new OAuthManager(context, {} as any); // reuse store methods
-      const tokensRaw = await context.secrets.get("aich.vertex.tokens");
-      if (!tokensRaw) throw new Error("Vertex not connected.");
-      const tokens = JSON.parse(tokensRaw);
-      // TODO: call Vertex AI Generative Language endpoint with tokens.access_token
-      // For brevity we return a placeholder
-      text = "feat: summarize staged changes (vertex)";
-    } else if (provider === "github") {
-      // You’ll likely proxy to your service or use GH Models API if applicable.
-      text = "chore: update files (github oauth)";
     } else if (provider === "ollama") {
       const base =
         (await context.secrets.get("aich.ollama.baseUrl")) ||
