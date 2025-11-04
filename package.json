@@ -124,7 +124,7 @@
     }
   },
   "scripts": {
-    "dev": "node --no-warnings ./out/extension.js",
+    "dev": "code --extensionDevelopmentPath .",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "watch:tsc": "tsc -watch -p ./",
