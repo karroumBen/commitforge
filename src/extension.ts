@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
 import { SidebarProvider } from "./sidebarProvider";
-import { OAuthManager } from "./oauth";
-import { OAUTH_PROVIDERS } from "./providers";
 import { generateAIMessage } from "./aiUtils";
 import { getStagedFiles, getDiff } from "./gitUtils";
 import { exec } from "child_process";
@@ -27,7 +25,6 @@ const MESSAGES = {
 } as const;
 
 interface Services {
-  oauth: OAuthManager;
   sidebar: SidebarProvider;
 }
 
@@ -66,10 +63,8 @@ export function deactivate(): void {
 async function initializeServices(
   context: vscode.ExtensionContext
 ): Promise<Services> {
-  const oauth = new OAuthManager(context, OAUTH_PROVIDERS);
-  const sidebar = new SidebarProvider(context, oauth);
-
-  return { oauth, sidebar };
+  const sidebar = new SidebarProvider(context);
+  return { sidebar };
 }
 
 /**
@@ -80,7 +75,6 @@ function registerProviders(
   services: Services
 ): void {
   const registrations = [
-    () => vscode.window.registerUriHandler(services.oauth),
     () =>
       vscode.window.registerWebviewViewProvider(
         "aiCommitForge.sidebar",

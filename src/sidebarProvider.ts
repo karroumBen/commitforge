@@ -1,13 +1,8 @@
 import * as vscode from "vscode";
-import { OAuthManager } from "./oauth";
-import { OAUTH_PROVIDERS } from "./providers";
 import { getActiveProvider, setActiveProvider, setApiKey } from "./secrets";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
-  constructor(
-    private context: vscode.ExtensionContext,
-    private oauth: OAuthManager
-  ) {}
+  constructor(private context: vscode.ExtensionContext) {}
 
   resolveWebviewView(view: vscode.WebviewView) {
     view.webview.options = { enableScripts: true };
@@ -36,17 +31,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             await setApiKey(this.context, "gemini");
             break;
 
-          // OAuth providers
-          case "connect-vertex":
-            await this.oauth.start("vertex");
-            vscode.window.showInformationMessage("Vertex connected.");
-            await setActiveProvider(this.context, "vertex");
-            break;
-          case "connect-github":
-            await this.oauth.start("github");
-            vscode.window.showInformationMessage("GitHub connected.");
-            await setActiveProvider(this.context, "github");
-            break;
+          // (Removed) OAuth providers
 
           case "disconnect":
             await this.context.secrets.delete(`aich.${msg.provider}.tokens`);
@@ -343,8 +328,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         <select id="active">
           <option value="gemini">🔸 Gemini (API Key)</option>
           <option value="openai">🤖 OpenAI (API Key)</option>
-          <option value="vertex">🔵 Vertex AI (OAuth)</option>
-          <option value="github">🐙 GitHub Copilot (OAuth)</option>
           <option value="ollama">🏠 Ollama (Local)</option>
         </select>
         <button id="saveActive" class="button-primary">Apply</button>
@@ -373,29 +356,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-header">OAuth2 Providers</div>
-    
-    <div class="provider-option">
-      <div class="provider-info">
-        <div class="provider-name">🔵 Google Vertex AI</div>
-        <div class="provider-type">OAuth2 Authentication</div>
-      </div>
-      <button id="connectVertex" class="button-secondary">Connect</button>
-    </div>
-    
-    <div class="provider-option">
-      <div class="provider-info">
-        <div class="provider-name">🐙 GitHub Copilot</div>
-        <div class="provider-type">OAuth2 Authentication</div>
-      </div>
-      <button id="connectGitHub" class="button-secondary">Connect</button>
-    </div>
-    
-    <div class="help-text">
-      OAuth redirect URI: <code>vscode://abenkarroum.ai-commit-forge/callback</code>
-    </div>
-  </div>
+  
 
   <div class="section">
     <div class="section-header">Local Runtime</div>
@@ -475,28 +436,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }, 1500);
   };
 
-  // OAuth connections
-  document.getElementById('connectVertex').onclick = () => {
-    const button = document.getElementById('connectVertex');
-    button.textContent = 'Authenticating...';
-    button.disabled = true;
-    vscode.postMessage({ type: 'connect-vertex' });
-    setTimeout(() => {
-      button.textContent = 'Connect';
-      button.disabled = false;
-    }, 2000);
-  };
-
-  document.getElementById('connectGitHub').onclick = () => {
-    const button = document.getElementById('connectGitHub');
-    button.textContent = 'Authenticating...';
-    button.disabled = true;
-    vscode.postMessage({ type: 'connect-github' });
-    setTimeout(() => {
-      button.textContent = 'Connect';
-      button.disabled = false;
-    }, 2000);
-  };
+  // (Removed) OAuth connections
 
   // Ollama configuration
   document.getElementById('saveOllama').onclick = () => {
