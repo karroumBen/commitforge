@@ -25,6 +25,16 @@ VSIX:
 1. Download the `.vsix`
 2. Run "Extensions: Install from VSIX..."
 
+**Install from source (build + package + install):**
+
+For a smooth one-step build and install when developing or installing from the repo:
+
+```bash
+./bootstrap.sh
+```
+
+This script cleans previous builds, compiles the extension, packages it as a `.vsix`, and installs it into VS Code (`code --install-extension`). Ensure `code` is on your `PATH` (e.g. install the "code" command from the Command Palette: "Shell Command: Install 'code' command in PATH").
+
 ## Quick Start
 
 1. Open the AI Commit Forge sidebar
@@ -81,7 +91,8 @@ PRs are welcome. Typical flow:
 git clone https://github.com/abenkarroum/ai-commit-forge.git
 cd ai-commit-forge
 npm install
-# F5 in VS Code to run
+# F5 in VS Code to run the Extension Development Host
+# Or run ./bootstrap.sh to build, package, and install the extension
 ```
 
 ## License
