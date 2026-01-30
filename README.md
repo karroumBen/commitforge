@@ -6,6 +6,10 @@
 
 AI Commit Forge helps you write better commit messages. It looks at your staged changes and suggests a short, clear message.
 
+![alt text](image.png)
+
+![alt text](image-1.png)
+
 ## Features
 
 - **Providers**: OpenAI, Google Gemini, or local Ollama
