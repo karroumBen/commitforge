@@ -2,6 +2,82 @@ import * as vscode from "vscode";
 import { fetch } from "undici";
 import { getActiveProvider, getApiKey } from "./secrets";
 
+const DEFAULT_OLLAMA_URL = "http://localhost:11434";
+
+export function normalizeOllamaBaseUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+export async function getOllamaBaseUrl(
+  context: vscode.ExtensionContext,
+  override?: string
+): Promise<string> {
+  const fromSecret = await context.secrets.get("aich.ollama.baseUrl");
+  const fromConfig = vscode.workspace
+    .getConfiguration("aiCommitHelper")
+    .get<string>("ollama.url");
+  return normalizeOllamaBaseUrl(
+    override?.trim() || fromSecret || fromConfig || DEFAULT_OLLAMA_URL
+  );
+}
+
+export async function listOllamaModels(baseUrl: string): Promise<string[]> {
+  let res: Awaited<ReturnType<typeof fetch>>;
+  try {
+    res = await fetch(`${baseUrl}/api/tags`);
+  } catch (error: any) {
+    throw new Error(
+      `Could not reach Ollama at ${baseUrl}. Is \`ollama serve\` running? (${error?.message ?? error})`
+    );
+  }
+
+  const data: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      data?.error || `Ollama at ${baseUrl} returned HTTP ${res.status}.`
+    );
+  }
+
+  return Array.isArray(data?.models)
+    ? data.models
+        .map((model: { name?: string }) => model?.name)
+        .filter((name: string | undefined): name is string => Boolean(name))
+    : [];
+}
+
+async function resolveOllamaModel(
+  context: vscode.ExtensionContext,
+  baseUrl: string
+): Promise<string> {
+  const fromSecret = (await context.secrets.get("aich.ollama.model"))?.trim();
+  const fromConfig = vscode.workspace
+    .getConfiguration("aiCommitHelper")
+    .get<string>("ollama.model")
+    ?.trim();
+  if (fromSecret) return fromSecret;
+  if (fromConfig) return fromConfig;
+
+  const models = await listOllamaModels(baseUrl);
+  if (!models.length) {
+    throw new Error(
+      `Connected to Ollama at ${baseUrl}, but no models are installed. Run \`ollama pull <model>\`.`
+    );
+  }
+  return models[0];
+}
+
+export async function testOllamaConnection(
+  context: vscode.ExtensionContext,
+  overrideUrl?: string
+): Promise<string> {
+  const baseUrl = await getOllamaBaseUrl(context, overrideUrl);
+  const models = await listOllamaModels(baseUrl);
+  if (!models.length) {
+    return `Connected to ${baseUrl}, but no models are installed. Run \`ollama pull <model>\`.`;
+  }
+  return `Connected to ${baseUrl}. Models: ${models.join(", ")}`;
+}
+
 export async function generateAIMessage({
   context,
   fileName,
@@ -57,15 +133,25 @@ export async function generateAIMessage({
         data?.choices?.[0]?.message?.content?.trim() ||
         "openai could not generate a commit message.";
     } else if (provider === "ollama") {
-      const base =
-        (await context.secrets.get("aich.ollama.baseUrl")) ||
-        "http://localhost:11434";
+      const base = await getOllamaBaseUrl(context);
+      const model = await resolveOllamaModel(context, base);
       const res = await fetch(`${base}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "llama3", prompt }),
+        body: JSON.stringify({
+          model,
+          prompt,
+          stream: false,
+          think: false,
+          options: { num_predict: 40 },
+        }),
       });
-      const data: any = await res.json();
+      const data: any = await res.json().catch(() => ({}));
+      if (!res.ok || data?.error) {
+        throw new Error(
+          data?.error || `Ollama request failed (HTTP ${res.status}).`
+        );
+      }
       text = data?.response?.trim() || "update changes";
     }
   } catch (e: any) {
