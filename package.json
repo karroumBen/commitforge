@@ -2,7 +2,7 @@
   "name": "ai-commit-forge",
   "displayName": "AI Commit Forge",
   "description": "Generate individual commit messages per file using AI",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "abenkarroum",
   "repository": {
     "type": "git",
@@ -50,8 +50,13 @@
         "title": "AI Commit Forge: Open Provider Config"
       },
       {
+        "command": "aiCommitForge.generateTestMessage",
+        "title": "AI Commit Forge: Test Message Generation",
+        "category": "AI Commit Forge"
+      },
+      {
         "command": "aiCommitForge.generateForFile",
-        "title": "$(sparkle) AI Commit",
+        "title": "AI Commit",
         "category": "AI Commit Forge",
         "icon": {
           "light": "resources/light/notebook.svg",
@@ -73,6 +78,16 @@
           ],
           "default": "gemini",
           "description": "Which provider to use for generation."
+        },
+        "aiCommitHelper.ollama.url": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Base URL of the local Ollama server."
+        },
+        "aiCommitHelper.ollama.model": {
+          "type": "string",
+          "default": "",
+          "description": "Ollama model name. Leave empty to use the first installed model."
         },
         "aiCommitHelper.vertex.clientId": {
           "type": "string",
@@ -132,7 +147,7 @@
     "publish": "vsce publish",
     "build": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
     "watch:esbuild": "esbuild src/extension.ts --bundle --outdir=out --platform=node --external:vscode --format=cjs --sourcemap",
-    "install:extension": "code --install-extension ai-commit-forge-0.0.4.vsix"
+    "install:extension": "code --install-extension ai-commit-forge-0.0.5.vsix"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getOllamaBaseUrl, testOllamaConnection } from "./aiUtils";
 import { getActiveProvider, setActiveProvider, setApiKey } from "./secrets";
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -13,7 +14,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         switch (msg.type) {
           case "init": {
             const active = getActiveProvider(this.context);
-            view.webview.postMessage({ type: "active", provider: active });
+            const ollamaUrl = await getOllamaBaseUrl(this.context);
+            view.webview.postMessage({
+              type: "active",
+              provider: active,
+              ollamaUrl,
+            });
             break;
           }
           case "set-active":
@@ -41,10 +47,27 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             );
             break;
 
+          case "save-ollama": {
+            const url = String(msg.url || "").trim().replace(/\/+$/, "");
+            if (!url) {
+              vscode.window.showErrorMessage("Ollama URL is required.");
+              break;
+            }
+            await this.context.secrets.store("aich.ollama.baseUrl", url);
+            vscode.window.showInformationMessage(`Ollama URL saved: ${url}`);
+            break;
+          }
+
+          case "test-ollama": {
+            const message = await testOllamaConnection(this.context, msg.url);
+            vscode.window.showInformationMessage(message);
+            break;
+          }
+
           case "test":
             // Simple smoke test — calls generation with a tiny prompt
             await vscode.commands.executeCommand(
-              "aiCommitHelper.generateTestMessage"
+              "aiCommitForge.generateTestMessage"
             );
             break;
         }
@@ -370,6 +393,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
           placeholder="http://localhost:11434"
           value="http://localhost:11434" 
         />
+        <button id="testOllama" class="button-secondary">Test</button>
         <button id="saveOllama" class="button-secondary">Save</button>
       </div>
       <div class="help-text">Configure your local Ollama server endpoint</div>
@@ -439,6 +463,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
   // (Removed) OAuth connections
 
   // Ollama configuration
+  document.getElementById('testOllama').onclick = () => {
+    const url = document.getElementById('ollamaUrl').value || '';
+    const button = document.getElementById('testOllama');
+
+    button.textContent = 'Testing...';
+    button.disabled = true;
+
+    vscode.postMessage({ type: 'test-ollama', url });
+
+    setTimeout(() => {
+      button.textContent = 'Test';
+      button.disabled = false;
+    }, 1500);
+  };
+
   document.getElementById('saveOllama').onclick = () => {
     const url = document.getElementById('ollamaUrl').value || '';
     const button = document.getElementById('saveOllama');
@@ -492,6 +531,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     switch (message.type) {
       case 'active':
         document.getElementById('active').value = message.provider;
+        if (message.ollamaUrl) {
+          document.getElementById('ollamaUrl').value = message.ollamaUrl;
+        }
         break;
     }
   });
